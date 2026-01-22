@@ -2,50 +2,64 @@
 
 ## level00
 
-For the level00, nothing relevant is provided in the /home/user/level00 directory. So what we are going to do is taking a look at every files of the computer that could be used by the user flag00 that we are trying to log on. To do so, we are going to use the find command. In our case:
+### Finding first hints
 
+For the **level00**, nothing relevant is provided in the /home/user/level00 directory. Since we are trying to log on the flag00 user, we can take a look at every files this user owns. To do so, we can use the ``find`` command. In our case:
 ```bash
 find / -user flag00 2> /dev/null
 ```
+The error redirection ``2> /dev/null`` is used to suppress all errors that are irrelevant in our case.
 
-We added the error redirection **2> /dev/null** to block all errors from being displayed.
-With this command, we get 2 outputs:
-
+With this command, we get 2 results:
 ```bash
 /usr/sbin/john
 /rofs/usr/sbin/john
 ```
 
-It is files, so we can cat them. And when doing that we get this output for both: **cdiiddwpgswtgt**
+These are classic files, so we can inspect their content with the ``cat`` command. Both of them output the same result:
+```bash
+cdiiddwpgswtgt
+```
 
-If we try connecting to the flag00 user with this, we get that error:
-
+At first glance, this could look like a password, so let's try it:
 ```bash
 level00@SnowCrash:~$ su flag00
 Password: 
 su: Authentication failure
 ```
 
-This means that this is not the password we are looking for. On the other hand, maybe we can do something with that.
-So what we are going to try is to probably decrypt it.
-To do so, we are going to use the french website [dcode](https://www.dcode.fr/) since this website gives us a very effective [Cipher Identifier](https://www.dcode.fr/cipher-identifier)
-With this tool, we can see few ciphers than may have been used to encrypt the password.
-8 of them have the best results, and actually 4 of them shows **nottoohardhere**:
+This means that this is not the password we are looking for. However, this still could be an **encrypted password**.
+
+### Cipher Identification
+
+To verify our theory, we are going to use the french website [dcode](https://www.dcode.fr/) since this website gives us a very effective [Cipher Identifier](https://www.dcode.fr/cipher-identifier)
+
+After submitting the string ``cdiiddwpgswtgt``, several possible ciphers are shown. Among all of possible relevant ciphers, only some of them actually decode to the same result:
 - Affine Cipher
 - Disk Cipher
 - ROT Cipher
 - Caesar Cipher
 
-We might not know all ciphers, we at least know the Caesar Cipher that consists in shifting letters a certain amount of time. For a shift of 1 on the left, A becomes B, B becomes C, ..., and Z becomes A.
-In our case, **cdiiddwpgswtgt** is a right shift of 15.
+We might not know all ciphers, but the **Caesar Cipher** is a well-known one. It consists in shifting letters a certain amount of time in a direction:
+|  Original  |  a  |  b  |  c  |  d  |  e  |  f  |  g  |  h  |  i  |  j  |  k  |  l  |  m  |  n  |  o  |  p  |  q  |  r  |  s  |  t  |  u  |  v  |  w  |  x  |  y  |  z  |
+| :--------: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: |
+|    1 🠜    |  b  |  c  |  d  |  e  |  f  |  g  |  h  |  i  |  j  |  k  |  l  |  m  |  n  |  o  |  p  |  q  |  r  |  s  |  t  |  u  |  v  |  w  |  x  |  y  |  z  |  a  |
+|    2 🠞    |  y  |  z  |  a  |  b  |  c  |  d  |  e  |  f  |  g  |  h  |  i  |  j  |  k  |  l  |  m  |  n  |  o  |  p  |  q  |  r  |  s  |  t  |  u  |  v  |  w  |  x  |
+|    15 🠞   |  l  |  m  |  n  |  o  |  p  |  q  |  r  |  s  |  t  |  u  |  v  |  w  |  x  |  y  |  z  |  a  |  b  |  c  |  d  |  e  |  f  |  g  |  h  |  i  |  j  |  k  |
 
-So now that we have **nottoohardhere**, we can try to log on the flag00 user:
+In our case, ``cdiiddwpgswtgt`` is a right shift of 15.
+
+### Authentication
+
+So now that we have the decoded string ``nottoohardhere``, we can try to log on the flag00 user:
 ```bash
 level00@SnowCrash:~$ su flag00
 Password: 
 Don't forget to launch getflag !
 flag00@SnowCrash:~$
 ```
+
+### Retrieving the flag
 
 It worked! We are in. So now, as they ask us to do, we are going to launch getflag:
 ```bash
@@ -63,3 +77,11 @@ level01@SnowCrash:~$
 It was indeed the right flag.
 
 ## level01
+
+For this **level01**, we can, in first place try, to find eventually files owned by flag01, like we did previously:
+```bash
+level01@SnowCrash:~$ find / -user flag01 2> /dev/null
+level01@SnowCrash:~$ 
+```
+
+Nothing was found. We are starting from scratch.
