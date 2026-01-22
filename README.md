@@ -205,7 +205,7 @@ It is of course not humanly readable, but now we know that the password we are l
 
 To proceed, we will be using [TShark](https://tshark.dev/), a terminal version of WireShark (our ``tshark`` package is built outside of the VM in a Dockerfile with an entrypoint ``tshark``).
 
-TShark offers a bunch of ways to gather informations in pcap files. What interest us here is the flag ``-z follow,prot,mode,filter[,range]``. It lets us see the contents of a stream between 2 connections.
+TShark provides various ways to extract information from pcap files. The most relevant feature for our analysis is the ``-z`` flag with the ``follow`` option (``-z follow,prot,mode,filter``). This allows us to reassemble and view the full data stream between two endpoints, exactly as the users saw it.
 
 ``prot`` specifies the protocol like TCP, UDP, SSL
 
