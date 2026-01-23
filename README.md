@@ -383,6 +383,7 @@ level04@SnowCrash:~$ perl level04.pl
 Content-type: text/html
 
 
+level04@SnowCrash:~$
 ```
 
 And when we display what is infile the file, we get this:
@@ -401,15 +402,16 @@ x(param("x"));
 
 As we can see the CGI (Common Gateway Interface) is used. CGI scripts are useful [to write dynamic program for the Web](https://www.perl.com/article/perl-and-cgi/).
 
-To interact with these scripts, using Perl is not the only way. We can making a request to the right address. Here the address is given: ``localhost:4747``
+To interact with these scripts, using ``perl`` is not the only way. We can making a request to the right address. Here the address is given: ``localhost:4747``
 ```bash
 level04@SnowCrash:~$ curl localhost:4747
 
+level04@SnowCrash:~$
 ```
 
 But nothing happens.
 
-If we take a closer look at the code, we can see that the script actually take a param ``x`` and is supposed to display it. So let's try again a request but this time with a ``x`` param in our url:
+If we take a closer look at the code, we can see that the script actually takes a param ``x`` and is supposed to display it. So let's try again but this time with a ``x`` param in our url:
 ```bash
 level04@SnowCrash:~$ curl localhost:4747/?x=test
 test
@@ -419,7 +421,7 @@ This time it worked! And this is where we are going to attack.
 
 In Perl, we need to becareful when letting the possibility to put people's own params (https://perldoc.perl.org/perlsec)
 
-In our case, you can manipulate what we send to run our own command. How? By closing earlier ``echo``'s quotes!
+In our case, we can manipulate what we send to run our own command. How? By closing earlier ``echo``'s quotes!
 
 If I say that my ``x``'s value is something like `` `/bin/get/flag` ``, the ``print`` line will look like this ``print `echo `/bin/getflag` 2>&1`;``.
 
