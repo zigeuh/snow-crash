@@ -519,3 +519,88 @@ level06@SnowCrash:~$
 It worked!
 
 </details>
+
+## level06
+
+<details>
+
+<summary>Explanations</summary>
+
+For this level, we are given 2 files:
+- A program: ``level06``
+- A PHP file: ``level06.php``
+
+When trying to use the program, we learn that we need to pass an filename as argument:
+```bash
+level06@SnowCrash:~$ ./level06 
+PHP Warning:  file_get_contents(): Filename cannot be empty in /home/user/level06/level06.php on line 4
+```
+
+We could try to pass the PHP file but it wouldn't look like anything. However, we can inspect the PHP file.
+```bash
+level06@SnowCrash:~$ cat level06.php 
+#!/usr/bin/php
+<?php
+function y($m) { $m = preg_replace("/\./", " x ", $m); $m = preg_replace("/@/", " y", $m); return $m; }
+function x($y, $z) { $a = file_get_contents($y); $a = preg_replace("/(\[x (.*)\])/e", "y(\"\\2\")", $a); $a = preg_replace("/\[/", "(", $a); $a = preg_replace("/\]/", ")", $a); return $a; }
+$r = x($argv[1], $argv[2]); print $r;
+?>
+```
+
+If we compare the error we got when trying to launch the program, and what is on line 4 of the PHP file, we can see that the same function is present. Also, if we look at the bottom of the file, we can read ``argv[1]``, ``argv[2]``. This means that the PHP file can be used as a program.
+
+Since we can't really check the code of the ``level06`` program, we are going to acknowledge that ``level06.php`` is the code of the program ``level06`` because of how similar it is.
+
+Now we should take a closer look on the code of the program to understand how it works and where is our entrypoint.
+
+### Understanding the PHP file
+
+First, let's read what the code is doing:
+
+- 1. It calls a function named ``x``, with as an arg ``$argv[1]`` (our file) and ``$argv[2]`` (that is never used), and that will return in a ``$r`` variable
+- 2. The ``x`` function calls another function named ``file_get_contents`` with our ``$y`` variable (that is ``$argv[1]`` since it's the first arg of ``x`` function)
+``file_get_contents`` with read the entire file and store it into ``$a``.
+- 3. Then, ``x`` function is going to call ``preg_replace``. ``preg_replace`` is a function that searches for matches in a string (3rd arg) with a regex (1st arg) to replace with a replacement (2nd arg).
+
+In our case, the regex is looking for a string starting with ``[x ``, that can have infinite chars after and that ends with ``]``.
+
+The replacement is a string return by the function ``$y`` that also uses ``preg_replace`` to transform ``.`` into ``x`` and ``@`` into ``y``.
+
+The string to modify is the content of the ``$a``, the content of the file.
+
+And we don't more information. Because we can observe something that is our entrypoint: ``/e``. ``/e`` means that whatever will be gathered by the regex, can execute code. Which is perfect for us.
+
+### Retrieving the token
+
+To make the PHP program run code, we need to give it a file, with a special string that will be read as code. But we also need to respect the regex format:
+```bash
+level06@SnowCrash:~$ echo '[x ${`getflag`}]' > /tmp/level06
+```
+
+It starts with ``[x`` and end with ``]``. So the regex will recognize this and keep ``${`getflag`}``.
+
+Why do we use ``${` `}`` tho?
+
+The only way to make the PHP code act differently is to use ``${}``, because this is also how variables can be interpreted. And we use the backticks `` ` `` because these are an execution operator.
+
+So basically:
+- 1. We say to the PHP code that we want to interpret a variable with ``${}``
+- 2. Then, we run the code inside of it with `` ` ``
+
+Now let's try it:
+```bash
+level06@SnowCrash:~$ ./level06 /tmp/level06
+PHP Notice:  Undefined variable: Check flag.Here is your token : wiok45aaoguiboiki2tuin6ub
+ in /home/user/level06/level06.php(4) : regexp code on line 1
+```
+
+As we can see, the code doesn't understand the variable, BUT, still ran the code inside, which gives us, a token ``wiok45aaoguiboiki2tuin6ub``:
+```bash
+level06@SnowCrash:~$ su level07
+Password: 
+level07@SnowCrash:~$ 
+```
+
+And it is indeed, once again, the valid token!
+
+</details>
