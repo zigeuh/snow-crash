@@ -526,6 +526,8 @@ It worked!
 
 <summary>Explanations</summary>
 
+###
+
 For this level, we are given 2 files:
 - A program: ``level06``
 - A PHP file: ``level06.php``
@@ -611,6 +613,8 @@ And it is indeed, once again, the valid token!
 
 <summary>Explanations</summary>
 
+###
+
 Once again, we have a file named ``level07``. This is a program, when executing it, this happen:
 ```bash
 level07@SnowCrash:~$ ./level07 
@@ -668,6 +672,8 @@ It worked once more!
 <details>
 
 <summary>Explanations</summary>
+
+###
 
 For this level, we have 2 files:
 - A program named ``level08``
