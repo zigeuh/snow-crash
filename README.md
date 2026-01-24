@@ -759,3 +759,164 @@ level09@SnowCrash:~$
 ```
 
 </details>
+
+## level09
+
+<details>
+
+<summary>Explanations</summary>
+
+###
+
+For this level, we have:
+- A progam named ``level09``
+- A file named ``token``
+
+This is kind of like the previous level, BUT this time, we can't ``ltrace`` the program, and we can read the token file:
+```bash
+level09@SnowCrash:~$ ltrace ./level09 
+__libc_start_main(0x80487ce, 1, 0xbffff7f4, 0x8048aa0, 0x8048b10 <unfinished ...>
+ptrace(0, 0, 1, 0, 0xb7e2fe38)                   = -1
+puts("You should not reverse this"You should not reverse this
+)              = 28
++++ exited (status 1) +++
+
+level09@SnowCrash:~$ cat token 
+f4kmm6p|=�p�n��DB�Du{��
+```
+
+We need to understand by ourselves what the program does:
+```bash
+level09@SnowCrash:~$ ./level09 
+You need to provied only one arg.
+level09@SnowCrash:~$ ./level09 abcde
+acegi
+level09@SnowCrash:~$ ./level09 01234
+02468
+level09@SnowCrash:~$ ./level09 aaaaa
+abcde
+level09@SnowCrash:~$ ./level09 00000
+01234
+```
+
+As we can see, the program takes a string, and return as string too. If we look closer at the output, we can see that it is not much different from our input. And if we compare the 2 last tests, we can see that the program add 0 on the 1st char, 1 on the 2nd char, 2 on the 3rd char, ...:
+```bash
+level09@SnowCrash:~$ ./level09 aaaaa
+abcde
+
+- a -> 97 + 0 = a
+- a -> 97 + 1 = b
+- a -> 97 + 2 = c
+- a -> 97 + 3 = d
+- a -> 97 + 4 = e
+```
+
+```bash
+level09@SnowCrash:~$ ./level09 00000
+01234
+
+- 0 -> 48 + 0 = 0
+- 0 -> 48 + 1 = 1
+- 0 -> 48 + 2 = 2
+- 0 -> 48 + 3 = 3
+- 0 -> 48 + 4 = 4
+```
+
+So what if we try to apply the same logic on our 2 first tests:
+```bash
+level09@SnowCrash:~$ ./level09 abcde
+acegi
+
+- a -> 97  + 0 = a
+- b -> 98  + 1 = c
+- c -> 99  + 2 = e
+- d -> 100 + 3 = g
+- e -> 101 + 4 = i
+```
+
+```bash
+level09@SnowCrash:~$ ./level09 01234
+02468
+
+- 0 -> 48 + 0 = 0
+- 1 -> 49 + 1 = 2
+- 2 -> 50 + 2 = 4
+- 3 -> 51 + 3 = 6
+- 4 -> 52 + 4 = 8
+```
+
+This logic does match others tests!
+
+So what if, the token got modify with ``level09`` program?
+
+### Retrieving the token
+
+If this is indeed the case, we then need to reverse it. To do so, we are going to code a little program that does the opposite of what ``level09`` does:
+```C
+#include <stdio.h>
+#include <fcntl.h>
+#include <unistd.h>
+
+int main() {
+	int i = 0;
+	int ascii = 0;
+	char str[100] = {0};
+
+	int fd = open("token", O_RDONLY);
+	read(fd, str, 99);
+
+	while (str[i]) {
+		str[i] = str[i] - ascii;
+		i++;
+		ascii++;
+	}
+
+	printf("%s\n", str);
+}
+```
+
+This program is going to open a ``token`` file and for each char of it, it's going to substract 0 at the first char, 1 at the second char, ect, to reverse what ``level09``. But now we need to get the token file out of our VM:
+```bash
+➜  level09 git:(main) ✗ scp -P 4242 level09@127.0.0.1:~/token . 
+           _____                      _____               _     
+          / ____|                    / ____|             | |    
+         | (___  _ __   _____      _| |     _ __ __ _ ___| |__  
+          \___ \| '_ \ / _ \ \ /\ / / |    | '__/ _` / __| '_ \ 
+          ____) | | | | (_) \ V  V /| |____| | | (_| \__ \ | | |
+         |_____/|_| |_|\___/ \_/\_/  \_____|_|  \__,_|___/_| |_|
+                                                        
+  Good luck & Have fun
+
+          10.0.2.15 
+level09@127.0.0.1's password: 
+token                                                                                                                                                                         100%   26    25.8KB/s   00:00
+
+➜  level09 git:(main) ✗ ls       
+reverse.c  token
+➜  level09 git:(main) ✗ cat token 
+f4kmm6p|=�p�n��DB�Du{��
+```
+
+Now that we have our ``token`` file, we can compile the program and try it out:
+```bash
+➜  level09 git:(main) ✗ ./a.out token                          
+f3iji1ju5yuevaus41q1afiuq�
+```
+
+There is a non-printable char at the end, but this is actually a ``/n`` - 26, so let's just remove it: ``f3iji1ju5yuevaus41q1afiuq``. If this is like the previous level, this is not our token, but the password for the flag:
+```bash
+level09@SnowCrash:~$ su flag09
+Password: 
+Don't forget to launch getflag !
+```
+
+Let's now get the token and go on the next level
+```bash
+flag09@SnowCrash:~$ getflag
+Check flag.Here is your token : s5cAJpM8ev6XHw998pRWG728z
+flag09@SnowCrash:~$ su level10
+Password: 
+level10@SnowCrash:~$ 
+```
+
+<details>

@@ -1,0 +1,14 @@
+s5cAJpM8ev6XHw998pRWG728z
+
+
+level09@SnowCrash:~$ cat token 
+f4kmm6p|=�p�n��DB�Du{��
+
+level09@SnowCrash:~$ ./level09 f3iji1ju5yuevaus41q1afiuq
+f4kmm6p|=�p�n��DB�Du{��
+
+level09@SnowCrash:~$ su flag09
+Password: 
+Don't forget to launch getflag !
+flag09@SnowCrash:~$ getflag
+Check flag.Here is your token : s5cAJpM8ev6XHw998pRWG728z
