@@ -1282,6 +1282,12 @@ Valid token, let's go on the next level.
 
 ## level13
 
+<details>
+
+<summary>Explanations</summary>
+
+###
+
 This level is a little trickier. We have a program named ``level13``:
 ```bash
 level13@SnowCrash:~$ ./level13 
@@ -1313,6 +1319,7 @@ Now that we are in gdb with level13 opened, we need first to open the ASM pannel
 ```bash
 (gdb) lay asm
 ```
+[Layout Assembly](https://ibb.co/yFRhJFqy)
 
 This is hard to read anything because of the current ASM synthax. To change that, we are going to use the Intel syntax, that is way easier to read:
 ```bash
@@ -1321,7 +1328,7 @@ This is hard to read anything because of the current ASM synthax. To change that
 
 This is how it should look like:
 
-picture
+[Intel syntax](https://ibb.co/gFhbpjFm)
 
 Now we can already understand what is happening:
 - The code calls ``getuid``: ``call   0x8048380 <getuid@plt>``
