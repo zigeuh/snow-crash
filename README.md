@@ -1279,3 +1279,112 @@ level13@SnowCrash:~$
 Valid token, let's go on the next level.
 
 </details>
+
+## level13
+
+This level is a little trickier. We have a program named ``level13``:
+```bash
+level13@SnowCrash:~$ ./level13 
+UID 2013 started us but we we expect 4242
+```
+
+We have nothing more, so let's see what the program does:
+```bash
+level13@SnowCrash:~$ ltrace ./level13 
+__libc_start_main(0x804858c, 1, 0xbffff7f4, 0x80485f0, 0x8048660 <unfinished ...>
+getuid()                                                                                                                          = 2013
+getuid()                                                                                                                          = 2013
+printf("UID %d started us but we we expe"..., 2013UID 2013 started us but we we expect 4242
+)                                                                               = 42
+exit(1 <unfinished ...>
++++ exited (status 1) +++
+```
+
+As we can see, the code gets the uid with the help of the function ``getuid()`` 2 times. The first time is probably to make the check, and the second time to print the error message. The program excepts us to change the UID to 4242. But without rooting, we can't change the user id of level13. So what we actually need to do, is manipulate **registers** when the program is running.
+
+To do so, we need to use a debug tool, like GDB which is installed by default, to disassemble the program:
+```bash
+level13@SnowCrash:~$ gdb level13
+#...
+(gdb) 
+```
+
+Now that we are in gdb with level13 opened, we need first to open the ASM pannel:
+```bash
+(gdb) lay asm
+```
+
+This is hard to read anything because of the current ASM synthax. To change that, we are going to use the Intel syntax, that is way easier to read:
+```bash
+(gdb) set disassembly-flavor intel
+```
+
+This is how it should look like:
+
+picture
+
+Now we can already understand what is happening:
+- The code calls ``getuid``: ``call   0x8048380 <getuid@plt>``
+- Compares the result (stored in eax) with the address ``0x1092`` (that is probably 4242): ``cmp    eax,0x1092``
+- If equals, the code jumps a big part of itself: ``0x80485cb <main+63>``
+- If not equals, the code continues, ``printf`` something and then ``exit`` (at ``main+58``) right before the jump should arrive (at ``main+63``).
+
+Not equals is what happens to us at the moment, which means that this ``printf`` is our current message. Which means we want the jump to happens.
+
+Since we are in Assembly, everything is stored in registers. And since we are disassembling the code, we can make it run instruction by instruction. And this is what we are going to abuse here.
+
+### Retrieving the token
+
+If we just ``run`` in gdb, it is going to run all the code, which is annoying in our situation. What we can do is add a breakpoint on the ``main`` function. Which will stop the code at the beginning of ``main``:
+```bash
+(gdb) break *main
+Breakpoint 1 at 0x804858c
+(gdb) run
+Starting program: /home/user/level13/level13 
+
+Breakpoint 1, 0x0804858c in main ()
+(gdb) 
+```
+
+Good, now that we are stopped at the beginning of the ``main``, we can actually start going instruction by instruction, with the command ``ni`` (next instruction). We need to reach the line **RIGHT AFTER** the first ``getuid`` call.
+
+When it is done, we can try to print the register we identify earlier, to check if we are right:
+```bash
+(gdb) print $eax
+print $eax
+$1 = 2013
+```
+
+And we are right, ``eax`` contains our UID. And this is actually normal. When calling a function in ASM, if the function returns something, it goes into the register ``eax``.
+
+We can also check if the address is indeed ``4242``:
+```bash
+(gdb) print 0x1092
+print 0x1092
+$3 = 4242
+```
+
+We were also right! So now, what we need to do is change what is inside the register ``eax``, before the comparison (``cmp``). To do so:
+```bash
+(gdb) set $eax = 4242
+set $eax = 4242
+(gdb) print $eax
+print $eax
+$4 = 4242
+```
+
+It couldn't be more easy. So now let's use ``next`` to go until the end of the program, and see if it worked:
+```bash
+your token is 2A31L79asukciNyi8uppkEuSx
+```
+
+The display is being very broken for some reason, but this line appears. Let's try the token:
+```bash
+level13@SnowCrash:~$ su level14
+Password: 
+level14@SnowCrash:~$ 
+```
+
+And this is it! Now let's head on the last level
+
+</details>
