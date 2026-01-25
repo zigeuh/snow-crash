@@ -1,5 +1,9 @@
 # snow-crash
 
+**An introduction to information security and binary exploitation.**
+
+This project marks the first step in the 42 school security branch. It takes the form of a **Capture The Flag (CTF)** challenge where the goal is to exploit vulnerabilities within a controlled environment to escalate privileges. It consists of 15 levels (0-14) on a given ISO. This project must be in a team of 2. We did it together with [@Slothera0](https://github.com/Slothera0).
+
 ## level00
 
 <details>
