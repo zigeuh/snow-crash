@@ -1395,3 +1395,210 @@ level14@SnowCrash:~$
 And this is it! Now let's head on the last level
 
 </details>
+
+## level14
+
+<details>
+
+<summary>Explanations</summary>
+
+### Finding hints
+
+We have literally nothing. No files, in the whole storage, nothing is owned by flag14, we are starting this level from scratch. The only thing we can do right now is trying to run ``getflag``, but of course, it doesn't work. At least, only on levels users.
+
+On the previous level, we disassembled a program to modify a value and access to our token. So why let's not trying to disassemble ``/bin/getflag``.
+
+But first, let's see what the program does, because disassembling it without knowing what to look at would be hell:
+```bash
+level14@SnowCrash:~$ ltrace /bin/getflag
+__libc_start_main(0x8048946, 1, 0xbffff7f4, 0x8048ed0, 0x8048f40 <unfinished ...>
+ptrace(0, 0, 1, 0, 0)                                                                                                             = -1
+puts("You should not reverse this"You should not reverse this
+)                                                                                               = 28
++++ exited (status 1) +++
+```
+
+We can't reverse the program. However, we can still check what the program uses, like functions:
+```bash
+level14@SnowCrash:~$ strings /bin/getflag 
+/lib/ld-linux.so.2
+__gmon_start__
+libc.so.6
+_IO_stdin_used
+__stack_chk_fail
+strdup
+stdout
+fputc
+fputs
+getenv
+stderr
+getuid
+ptrace
+fwrite
+open
+__libc_start_main
+GLIBC_2.4
+GLIBC_2.0
+PTRh@
+QVhF
+UWVS
+[^_]
+0123456
+You should not reverse this
+LD_PRELOAD
+Injection Linked lib detected exit..
+/etc/ld.so.preload
+/proc/self/maps
+/proc/self/maps is unaccessible, probably a LD_PRELOAD attempt exit..
+libc
+Check flag.Here is your token : 
+You are root are you that dumb ?
+I`fA>_88eEd:=`85h0D8HE>,D
+7`4Ci4=^d=J,?>i;6,7d416,7
+<>B16\AD<C6,G_<1>^7ci>l4B
+B8b:6,3fj7:,;bh>D@>8i:6@D
+?4d@:,C>8C60G>8:h:Gb4?l,A
+G8H.6,=4k5J0<cd/D@>>B:>:4
+H8B8h_20B4J43><8>\ED<;j@3
+78H:J4<4<9i_I4k0J^5>B1j`9
+bci`mC{)jxkn<"uD~6%g7FK`7
+Dc6m~;}f8Cj#xFkel;#&ycfbK
+74H9D^3ed7k05445J0E4e;Da4
+70hCi,E44Df[A4B/J@3f<=:`D
+8_Dw"4#?+3i]q&;p6 gtw88EC
+boe]!ai0FB@.:|L6l@A?>qJ}I
+g <t61:|4_|!@IF.-62FH&G~DCK/Ekrvvdwz?v|
+Nope there is no token here for you sorry. Try again :)
+#...
+```
+
+There is an important information here. It is that ``getuid()`` is used again. And since the UID is never printed when using ``getflag``, that probably means that ``getuid()`` is used to send the correct token depending on the user who is running ``getflag``.
+
+So what we need to do is:
+1. Going into a previous level flag user
+2. Displaying the ASM version of /bin/getflag
+3. Finding where ``getuid`` is called
+4. Changing the ``eax`` value, after the call of ``getuid``, to our ``flag14``'s UID
+5. Letting the program run until the end and show us the token
+
+We need to get the UID of ``flag14`` first:
+```bash
+level14@SnowCrash:~$ getent passwd
+#...
+flag14:x:3014:3014::/home/flag/flag14:/bin/bash
+```
+
+We got it: ``3014``.
+
+So now, let's go into a previous level flag user, like ``flag10`` since we have the password of it.
+
+After this, we can start disassembling ``/bin/getflag``:
+```bash
+flag10@SnowCrash:~$ gdb /bin/getflag
+#...
+(gdb) set disassembly-flavor intel
+(gdb) lay asm
+```
+
+We have our ASM display. Our next step is to find the ``getuid`` call:
+```bash
+0x8048afd <main+439>    call   0x80484b0 <getuid@plt>
+```
+
+We are lucky, this is the only ``getuid`` call, so no doubt. And actually, if we look at what is right after:
+```bash
+0x8048b0a <main+452>    cmp    eax,0xbbe
+0x8048b0f <main+457>    je     0x8048ccb <main+901>
+0x8048b15 <main+463>    cmp    eax,0xbbe
+0x8048b1a <main+468>    ja     0x8048b68 <main+546>
+0x8048b1c <main+470>    cmp    eax,0xbba
+0x8048b21 <main+475>    je     0x8048c3b <main+757>
+0x8048b27 <main+481>    cmp    eax,0xbba
+0x8048b2c <main+486>    ja     0x8048b4d <main+519>
+0x8048b2e <main+488>    cmp    eax,0xbb8
+0x8048b33 <main+493>    je     0x8048bf3 <main+685>
+0x8048b39 <main+499>    cmp    eax,0xbb8
+0x8048b3e <main+504>    ja     0x8048c17 <main+721>
+```
+
+Precisely looking and explaning at what the program does would take too much time for nothing. But what we can easily see is comparisons (``cmp``) and jumps (``je``, ``ja``) depends on what is the output of the comparisons. And there are a lot of these, which is probably where the program chooses which flag to display.
+
+So let's put a breakpoint on the first comparison (``0x8048b0a <main+452>    cmp    eax,0xbbe``) to run the program **UNTIL** this line:
+```bash
+(gdb) break *main+452
+Breakpoint 1 at 0x8048b0a
+(gdb) run
+Starting program: /bin/getflag
+[Inferior 1 (process 3579) exited with code 01]
+```
+
+Nothing happened, the code stopped. And because we forgot something. The program uses a ``ptrace`` to block us from reversing the code. So let's find this ``ptrace``, and let's put a breakpoint on the test of it, run the program and print the value:
+```bash
+0x8048989 <main+67>     call   0x8048540 <ptrace@plt>
+0x804898e <main+72>     test   eax,eax
+0x8048990 <main+74>     jns    0x80489a8 <main+98>
+0x8048992 <main+76>     mov    DWORD PTR [esp],0x8048fa8
+0x8048999 <main+83>     call   0x80484e0 <puts@plt>
+0x804899e <main+88>     mov    eax,0x1
+0x80489a3 <main+93>     jmp    0x8048eb2 <main+1388> 
+#--------------------------------------------------------
+(gdb) break *main+72
+```
+
+We can't show everything, it is way too big, but, if the code does jump to ``main+1388`` (``jmp    0x8048eb2 <main+1388>``), it will leave the program. So we need to bypass that by jumping before. 
+
+To jump before, we need to activate this line: ``jns    0x80489a8 <main+98>``. ``jns`` activates when the ``SF`` flag is set to 0. One way to do it is using ``test`` with ``eax`` >= 0. Because if we check the current value of ``eax`` when using ``test`` before ``jns``:
+```bash
+(gdb) run
+Starting program: /bin/getflag
+
+Breakpoint 1, 0x0804898e in main ()
+(gdb) print $eax
+$1 = -1
+```
+
+``eax`` value is negative, which sets ``SF`` flag to **1** when using ``test``. So let's change the value of ``eax`` before it gets tested. And let's put the other breakpoint (the one after ``getuid`` we talked about earlier):
+```bash
+(gdb) break *main+72
+Breakpoint 1 at 0x804898e
+(gdb) break *main+452
+(gdb) run
+Starting program: /bin/getflag
+
+Breakpoint 1, 0x0804898e in main ()
+(gdb) set $eax = 1
+(gdb) next
+
+# ------------- We are at -------------
+
+0x8048b0a <main+452>    cmp    eax,0xbbe
+```
+
+It worked! And so now, let's check our theory with the UID:
+```bash
+(gdb) print $eax
+print $eax
+$1 = 3010
+```
+
+3010 is indeed the UID of ``flag10`` that we are currently using. So let's set ``eax`` to the ``flag14``'s UID, and let's run the program until the end:
+```bash
+(gdb) set $eax = 3014
+(gdb) next
+Single stepping until exit from function main,
+which has no line number information.
+Check flag.Here is your token : 7QiHafiNa3HVozsaXkawuYrTstxbpABHD8CPnHJ
+```
+
+And here we have it! Since there is no ``level15`` user, let's try to log on the ``flag14`` user:
+```bash
+flag10@SnowCrash:~$ su flag14
+Password: 
+Congratulation. Type getflag to get the key and send it to me the owner of this livecd :)
+flag14@SnowCrash:~$ getflag
+Check flag.Here is your token : 7QiHafiNa3HVozsaXkawuYrTstxbpABHD8CPnHJ
+```
+
+And this is it, we finished all levels!
+
+</details>
