@@ -1323,7 +1323,7 @@ Now that we are in gdb with level13 opened, we need first to open the ASM pannel
 ```bash
 (gdb) lay asm
 ```
-![Layout Assembly](https://raw.githubusercontent.com/zigeuh/snow-crash/refs/heads/main/Screenshot%20from%202026-01-24%2022-12-36.png?token=GHSAT0AAAAAADTZ3TBQVENCJ5PPHK22QIMK2LWOYSA)
+![Layout Assembly](https://raw.githubusercontent.com/zigeuh/snow-crash/refs/heads/main/Screenshot%20from%202026-01-24%2022-12-36.png)
 
 This is hard to read anything because of the current ASM synthax. To change that, we are going to use the Intel syntax, that is way easier to read:
 ```bash
@@ -1332,7 +1332,7 @@ This is hard to read anything because of the current ASM synthax. To change that
 
 This is how it should look like:
 
-![Intel syntax](https://raw.githubusercontent.com/zigeuh/snow-crash/refs/heads/main/Screenshot%20from%202026-01-24%2022-12-59.png?token=GHSAT0AAAAAADTZ3TBR3MLBPWO7WUWUDDXW2LWORLQ)
+![Intel syntax](https://raw.githubusercontent.com/zigeuh/snow-crash/refs/heads/main/Screenshot%20from%202026-01-24%2022-12-59.png)
 
 Now we can already understand what is happening:
 - The code calls ``getuid``: ``call   0x8048380 <getuid@plt>``
